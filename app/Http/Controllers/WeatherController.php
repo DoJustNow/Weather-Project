@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\City;
 use App\Weather;
-use App\Weather\Adapters\WeatherClientAdapter;
+use App\Weather\Adapters\ClientOpenWeatherAdapter;
+use App\Weather\Adapters\ClientYandexWeatherAdapter;
 use App\Weather\Clients\ClientOpenWeather;
 use App\Weather\Clients\ClientYandexWeather;
 use App\Weather\DTO\WeatherDTO;
@@ -15,20 +16,17 @@ use Illuminate\Http\Request;
 class WeatherController extends Controller
 {
     private $request;
-    private $weatherClientAdapter;
     private $clientYandexWeather;
     private $clientOpenWeather;
 
     public function __construct(
             Request $request,
-            WeatherClientAdapter $weather,
             ClientYandexWeather $clientYandexWeather,
             ClientOpenWeather $clientOpenWeather
     ) {
-        $this->request              = $request;
-        $this->weatherClientAdapter = $weather;
-        $this->clientYandexWeather  = $clientYandexWeather;
-        $this->clientOpenWeather    = $clientOpenWeather;
+        $this->request             = $request;
+        $this->clientYandexWeather = $clientYandexWeather;
+        $this->clientOpenWeather   = $clientOpenWeather;
 
     }
 
@@ -72,8 +70,10 @@ class WeatherController extends Controller
     }
 
     /*Request уже есть т.к Dependency Injection*/
-    public function addWeather()
-    {
+    public function addWeather(
+            ClientOpenWeatherAdapter $clientOpenWeatherAdapter,
+            ClientYandexWeatherAdapter $clientYandexWeatherAdapter
+    ) {
         $this->validate($this->request,
                 ['city_id' => 'required|regex:/^[1-4]$/'],
                 [
@@ -86,16 +86,13 @@ class WeatherController extends Controller
         $lat          = $selectedCity->lat;
         $lon          = $selectedCity->lon;
         $city         = $selectedCity->name;
-//        $this->weatherClientAdapter->setLat($lat);
-//        $this->weatherClientAdapter->setLon($lon);
-        $this->weatherClientAdapter->setClientAdapter($this->clientYandexWeather);
-        if ( ! empty($weather = $this->weatherClientAdapter->getWeather($lat, $lon))) {
+        if ( ! empty($weather = $clientYandexWeatherAdapter->getWeather($lat, $lon))) {
             $info ['successful'][] = $this->addWeatherInDB('Yandex', $city, $weather);
         } else {
             $info ['failure'][] = 'Не удалось подключиться к Yandex API';
         }
-        $this->weatherClientAdapter->setClientAdapter($this->clientOpenWeather);
-        if ( ! empty($weather = $this->weatherClientAdapter->getWeather($lat, $lon))) {
+        //$this->weatherClientAdapter->setClientAdapter($this->clientOpenWeather);
+        if ( ! empty($weather = $clientOpenWeatherAdapter->getWeather($lat, $lon))) {
             $info ['successful'][] = $this->addWeatherInDB('OpenWeather', $city, $weather);
         } else {
             $info ['failure'][] = 'Не удалось подключиться к OpenWeather API';

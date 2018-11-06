@@ -26,7 +26,7 @@ class ClientYandexWeather implements WeatherClientInterface
             $response      = $this->client->request('GET', $uri, $options);
             $response_data = json_decode((string)$response->getBody(), true);
 
-            return TranslatorYandexWeather::translate($response_data);
+            return $response_data;
         } catch (GuzzleException $e) {
 
             return null;

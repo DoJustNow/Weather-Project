@@ -13,7 +13,12 @@ return [
     | to have a conventional place to find your various credentials.
     |
     */
-
+    //SOCIALITE
+    'github' =>[
+            'client_id'=>'7361a9b17aae6d228705',
+            'client_secret'=>'2621e2c6e6dca7f93fd421b8f4a77bab4f55d652',
+            'redirect'=>'http://weather.lo/socialite/github/callback'
+    ],
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),

@@ -24,7 +24,7 @@ class ClientOpenWeather implements WeatherClientInterface
             $response      = $this->client->request('GET', $uri);
             $response_data = json_decode((string)$response->getBody(), true);
 
-            return TranslatorOpenWeather::translate($response_data);
+            return $response_data;
         } catch (GuzzleException $e) {
             return null;
         }
