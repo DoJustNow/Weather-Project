@@ -19,8 +19,7 @@ Route::prefix('weather')->middleware(['auth'])->group(
         function () {
             Route::get('form', 'WeatherController@addWeatherForm')->name('formWeather');
             Route::post('form', 'WeatherController@addWeather')->name('formAddWeather');
-            Route::get('show/{city?}', 'WeatherController@showWeather')->name('showWeather')
-            ;
+            Route::get('show/{city?}', 'WeatherController@showWeather')->name('showWeather');
             Route::post('show','WeatherController@targetCity')->name('cityWeather');
         });
 Auth::routes();
