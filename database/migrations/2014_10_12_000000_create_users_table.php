@@ -15,9 +15,17 @@ class CreateUsersTable extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->increments('id');
+            //SOCIALITE
+            $table->string('github_id')->unique()->index()->nullable();
+            $table->string('mailru_id')->unique()->index()->nullable();
+            $table->string('google_id')->unique()->index()->nullable();
+            $table->string('vkontakte_id')->unique()->index()->nullable();
+            //Токен верификации
+            $table->string('verify_token')->nullable()->default(null);
+            $table->timestamp('email_verified_at')->nullable();//
             $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('email')->nullable()->unique();
+            $table->string('unconfirmed_email')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();

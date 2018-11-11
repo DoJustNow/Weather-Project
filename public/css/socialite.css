@@ -1,0 +1,18 @@
+@import url(https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css);
+.social a{
+    text-align:center;
+    width:46px;
+    height:46px;
+    float:left;
+    background:#fff;
+    border:1px solid #ccc;
+    box-shadow:0 2px 4px rgba(0,0,0,0.15), inset 0 0 50px rgba(0,0,0,0.1);
+    border-radius:10px;
+    margin:0 5px 5px 0;
+    padding:6px;
+    color:#000;
+}
+.github a:hover{background:#191919;color:#fff;}
+.google-pluse a:hover{background:#DD4B39;color:#fff;}
+.vk a:hover{background:#5d84ae;color:#fff;}
+.mail-ru a:hover{background:#1087dd;color:#fff;}

@@ -148,6 +148,7 @@ return [
         Illuminate\View\ViewServiceProvider::class,
             //SOCIALITE
             Laravel\Socialite\SocialiteServiceProvider::class,
+            \SocialiteProviders\Manager\ServiceProvider::class,
 
         /*
          * Package Service Providers...

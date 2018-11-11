@@ -75,10 +75,10 @@ class WeatherController extends Controller
             ClientYandexWeatherAdapter $clientYandexWeatherAdapter
     ) {
         $this->validate($this->request,
-                ['city_id' => 'required|regex:/^[1-4]$/'],
+                ['city_id' => 'required|exists:cities,id'],
                 [
                         'required' => 'Необходимо выбрать город.',
-                        'regex'    => 'Что-то пошло не так!',
+                        'exists'   => 'Что-то пошло не так! :attribute ?',
                 ]
         );
         $cities       = $this->getCitiesFromDB();
@@ -91,7 +91,7 @@ class WeatherController extends Controller
         } else {
             $info ['failure'][] = 'Не удалось подключиться к Yandex API';
         }
-        //$this->weatherClientAdapter->setClientAdapter($this->clientOpenWeather);
+
         if ( ! empty($weather = $clientOpenWeatherAdapter->getWeather($lat, $lon))) {
             $info ['successful'][] = $this->addWeatherInDB('OpenWeather', $city, $weather);
         } else {

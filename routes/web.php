@@ -17,47 +17,38 @@ Route::get('/', function (Request $request) {
     return redirect()->route('home');
 });
 
-Route::prefix('weather')->middleware(['auth'])->group(
+Route::prefix('weather')->middleware(['auth', 'myVerifiedEmail'])->group(
         function () {
             Route::get('form', 'WeatherController@addWeatherForm')->name('formWeather');
             Route::post('form', 'WeatherController@addWeather')->name('formAddWeather');
             Route::get('show/{city?}', 'WeatherController@showWeather')->name('showWeather');
             Route::post('show', 'WeatherController@targetCity')->name('cityWeather');
         });
-Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
-//TODO
+
+//SOCIALITE
 Route::prefix('socialite')->group(
         function () {
-            Route::get('{provider}', function ($provider) {
-                return Socialite::driver($provider)->redirect();
-            });
-            Route::get('{provider}/callback',
-                    function ($provider) {
-                        $user = Socialite::driver($provider)->user();
-                        var_dump($user);
-                    }
-            );
+            Route::get('{provider}', 'Auth\SocialiteController@redirectToProvider')->name('socialiteAuth');
+            Route::any('{provider}/callback', 'Auth\SocialiteController@handleProviderCallback');
         }
 );
-/*
-Route::get('/socialite/github',
-        function () {
-            return Socialite::driver('github')->redirect();
-        }
-        );
-Route::get('/socialite/github/callback',
-        function (Request $request){
-            $user = Socialite::driver('github')->user();
-            session()->put('userIdGit',$user->nickname);
-            var_dump($user);
 
-        });
-Route::get('/test',
-        function () {
-    session()->flush();
-    //session()->put('test','1234567');
-    return redirect('/');
-        }
-        );*/
+Auth::routes();
+//Отправка токена на мыло
+Route::get('verify/send', 'Auth\ProfileController@sendToken')->middleware([
+        'auth',
+        'myCheckExistEmail',
+])->name('verify_resend');
+//Страниццу с информацией о том что надо подтвердить Email
+Route::get('verify', 'Auth\ProfileController@verify')->middleware(['auth', 'myCheckExistEmail'])->name('verify');
+//Верификация (подтверждение) email-a при изменении
+Route::get('verification/{id}/{token}', 'Auth\ProfileController@verificationChangeEmail')
+        ->name('verificationEmail');
+
+//
+Route::prefix('profile')->middleware(['auth'])->group(function () {
+    Route::get('settings', 'Auth\ProfileController@showSettings')->name('profileSettings');
+    Route::post('settings', 'Auth\ProfileController@changeSettings')->name('profileSettingsChange');
+});

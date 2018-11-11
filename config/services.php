@@ -14,30 +14,45 @@ return [
     |
     */
     //SOCIALITE
-    'github' =>[
-            'client_id'=>'7361a9b17aae6d228705',
-            'client_secret'=>'2621e2c6e6dca7f93fd421b8f4a77bab4f55d652',
-            'redirect'=>'http://weather.lo/socialite/github/callback'
-    ],
-    'mailgun' => [
-        'domain' => env('MAILGUN_DOMAIN'),
-        'secret' => env('MAILGUN_SECRET'),
-    ],
+        'mailru' => [
+                'client_id' => env('MAILRU_KEY'),
+                'client_secret' => env('MAILRU_SECRET'),
+                'redirect' => env('MAILRU_REDIRECT'),
+        ],
+        'github'    => [
+                'client_id'     => env('GITHUB_KEY'),
+                'client_secret' => env('GITHUB_SECRET'),
+                'redirect'      => env('GITHUB_REDIRECT'),
+        ],
+        'google'    => [
+                'client_id'     => env('GOOGLE_KEY'),
+                'client_secret' => env('GOOGLE_SECRET'),
+                'redirect'      => env('GOOGLE_REDIRECT'),
+        ],
+        'vkontakte' => [
+                'client_id'     => env('VKONTAKTE_KEY'),
+                'client_secret' => env('VKONTAKTE_SECRET'),
+                'redirect'      => env('VKONTAKTE_REDIRECT'),
+        ],
+        'mailgun'   => [
+                'domain' => env('MAILGUN_DOMAIN'),
+                'secret' => env('MAILGUN_SECRET'),
+        ],
 
-    'ses' => [
-        'key' => env('SES_KEY'),
-        'secret' => env('SES_SECRET'),
-        'region' => env('SES_REGION', 'us-east-1'),
-    ],
+        'ses' => [
+                'key'    => env('SES_KEY'),
+                'secret' => env('SES_SECRET'),
+                'region' => env('SES_REGION', 'us-east-1'),
+        ],
 
-    'sparkpost' => [
-        'secret' => env('SPARKPOST_SECRET'),
-    ],
+        'sparkpost' => [
+                'secret' => env('SPARKPOST_SECRET'),
+        ],
 
-    'stripe' => [
-        'model' => App\User::class,
-        'key' => env('STRIPE_KEY'),
-        'secret' => env('STRIPE_SECRET'),
-    ],
+        'stripe' => [
+                'model'  => App\User::class,
+                'key'    => env('STRIPE_KEY'),
+                'secret' => env('STRIPE_SECRET'),
+        ],
 
 ];

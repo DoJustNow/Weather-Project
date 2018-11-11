@@ -18,6 +18,7 @@
 
     <!-- Styles -->
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/socialite.css') }}" rel="stylesheet">
     <link href="{{ asset('css/animate.css') }}" rel="stylesheet" type="text/css">
     <style>
         ul {
@@ -76,6 +77,10 @@
                                    onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
                                     {{ __('Logout') }}
+                                </a>
+                                <!-- Добавил Настройку профиля-->
+                                <a class="dropdown-item" href="{{ route('profileSettings') }}">
+                                    {{'Настройки профиля'}}
                                 </a>
 
                                 <form id="logout-form" action="{{ route('logout') }}" method="POST"
