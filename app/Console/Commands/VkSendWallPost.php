@@ -44,7 +44,7 @@ class VkSendWallPost extends Command
      */
     public function handle()
     {
-        //VK Sdk
+        //VK Sdk api
         $vk           = new VKApiClient();
         $access_token = env('VK_ACCESS_TOKEN');
         //Число отправляемых записей о прогнозе погоды в одном посте
