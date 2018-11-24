@@ -57,10 +57,8 @@ class VkSyncWallPosts extends Command
                                      });
         //Получили ID всех уникальных постов за все время
         $postsId = array_unique($this->postsIdBuffer);
-        //dd($postsId);
-        //dd($this->postsIdBuffer);
-        dump($postsId);
-        //Цикл по постам в вк//TODO
+
+        /*TODO Цикл по постам вк*/
         $response = $vk->wall()
                        ->get($access_token,
                            [

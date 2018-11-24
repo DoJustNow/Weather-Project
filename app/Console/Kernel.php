@@ -28,6 +28,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')
         //          ->hourly();
         //TODO добавить всякие плюшки
+        $schedule->command(Commands\VkSyncWallPosts::class)->everyMinute();
         $schedule->command(Commands\VkSendWallPost::class)->everyMinute();
     }
 
