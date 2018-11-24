@@ -11,9 +11,7 @@
 |
 */
 
-Route::get('/', function (Request $request) {
-    //var_dump(session()->all());
-    //echo session('test');
+Route::get('/', function () {
     return redirect()->route('home');
 });
 
@@ -37,17 +35,15 @@ Route::prefix('socialite')->group(
 
 Auth::routes();
 //Отправка токена на мыло
-Route::get('verify/send', 'Auth\ProfileController@sendToken')->middleware([
-        'auth',
-        'myCheckExistEmail',
-])->name('verify_resend');
+Route::get('verify/send', 'Auth\ProfileController@sendToken')
+        ->middleware(['auth', 'myCheckExistEmail'])->name('verify_resend');
 //Страниццу с информацией о том что надо подтвердить Email
 Route::get('verify', 'Auth\ProfileController@verify')->middleware(['auth', 'myCheckExistEmail'])->name('verify');
 //Верификация (подтверждение) email-a при изменении
 Route::get('verification/{id}/{token}', 'Auth\ProfileController@verificationChangeEmail')
         ->name('verificationEmail');
-
-//
+Route::get('verif/{id}/{token}', 'Auth\SocialiteController@verifySocialite')->name('verifySocialite');
+//Роуты профайла пользователя
 Route::prefix('profile')->middleware(['auth'])->group(function () {
     Route::get('settings', 'Auth\ProfileController@showSettings')->name('profileSettings');
     Route::post('settings', 'Auth\ProfileController@changeSettings')->name('profileSettingsChange');

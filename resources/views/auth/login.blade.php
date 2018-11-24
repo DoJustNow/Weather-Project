@@ -54,16 +54,16 @@
 <div class="form-group row mb-0">
     <div class="col-md-8 mx-auto">
                         <div class="social github">
-                            <a href="{{route('socialiteAuth',['provider'=>'github'])}}" target="_blank"><i class="fa fa-github fa-2x"></i></a>
+                            <a href="{{route('socialiteAuth',['provider'=>'github'])}}"><i class="fa fa-github fa-2x"></i></a>
                         </div>
                         <div class="social vk">
-                            <a href="{{route('socialiteAuth',['provider'=>'vkontakte'])}}" target="_blank"><i class="fa fa-vk fa-2x"></i></a>
+                            <a href="{{route('socialiteAuth',['provider'=>'vkontakte'])}}"><i class="fa fa-vk fa-2x"></i></a>
                         </div>
                         <div class="social google-pluse">
-                            <a href="{{route('socialiteAuth',['provider'=>'google'])}}" target="_blank"><i class="fa fa-google fa-2x"></i></a>
+                            <a href="{{route('socialiteAuth',['provider'=>'google'])}}"><i class="fa fa-google fa-2x"></i></a>
                         </div>
                         <div class="social mail-ru">
-                            <a href="{{route('socialiteAuth',['provider'=>'mailru'])}}" target="_blank"><i class="fa fa-at fa-2x"></i></a>
+                            <a href="{{route('socialiteAuth',['provider'=>'mailru'])}}"><i class="fa fa-at fa-2x"></i></a>
                         </div>
     </div>
 </div>

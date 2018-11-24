@@ -9,7 +9,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Validation\ValidationException;
 use Mail;
 
 class ProfileController extends Controller
@@ -28,7 +27,8 @@ class ProfileController extends Controller
             $sendMailResult = $this->sendMail($user, $user->verify_token);
 
         } catch (Exception $exception) {
-            return 'Ошибка ';
+            session()->put('infoMessage', 'Ошибка подключения к БД.');
+            return view('infoBoard');
         }
         //Записываем в сессию результат
         if ($sendMailResult) {
@@ -53,10 +53,10 @@ class ProfileController extends Controller
             $user                 = Auth::user();
             $userEmail            = $user->email;
             $userUnconfirmedEmail = $user->unconfirmed_email;
-
             return view('auth.profile', compact(['userEmail', 'userUnconfirmedEmail']));
         } catch (Exception $exception) {
-            return 'Ошибка ';
+            session()->put('infoMessage', 'Ошибка подключения к БД.');
+            return view('infoBoard');
         }
     }
 
@@ -66,29 +66,31 @@ class ProfileController extends Controller
         просто по приколу*/
         $request->flashOnly('email');
         //Проверка полученных данных из формы
-        $this->validate($request, ['email' => 'required|email|unique:users,email',],
+        $this->validate($request, ['email' => 'required|email|unique:users,email'],
                 [
                         'email'    => 'Поле должно быть email-ом',
                         'unique'   => 'Пользователь с таким email-ом уже существует',
                         'required' => 'Поле обязательно для заполнения',
                 ]);
 
+
         try {
             //Текущий авторизованный пользователь
             $user = Auth::user();
+            //Ставим ему новый неподтвержденный email
+            $user->unconfirmed_email = $request->email;
+            //Формируем токен для того чтобы подтвердить Email
+            $user->verify_token = str_random(64);
+            //Сохраняем измененную запись в БД
+            $user->save();
         } catch (Exception $exception) {
-            return 'Ошибка ';
+            session()->put('infoMessage', 'Ошибка подключения к БД.');
+            return view('infoBoard');
         }
-        //Ставим ему новый неподтвержденный email
-        $user->unconfirmed_email = $request->email;
-        //Формируем токен для того чтобы подтвердить Email
-        $user->verify_token = str_random(64);
-        //Сохраняем измененную запись в БД
-        $user->save();
         //Отправляем письмо на почту для подтверждение Email-а
         $sendMailResult = $this->sendMail($user, $user->verify_token);
 
-        //Записываем в сессию результат
+        //Записываем в сессию результат отправки письма
         if ($sendMailResult) {
             session()->put('send_email_status', true);
             session()->put('send_email_message', 'Письмо удачно отправлено. Проверьте свою почту.');
@@ -97,6 +99,7 @@ class ProfileController extends Controller
             session()->put('send_email_message', 'Не удалось отправить письмо.');
         }
 
+        //Редирект на страницу настроек чтобы отобразить результат
         return redirect()->route('profileSettings');
     }
 
@@ -104,6 +107,7 @@ class ProfileController extends Controller
     private function sendMail(User $user, string $token)
     {
         try {
+            //Отправка письма на непотвержденную почту используя свой шаблон письма VerifyChangeEmail
             Mail::to($user->unconfirmed_email)
                     ->send(new VerifyChangeEmail(env('APP_URL') . '/verification/' . $user->id . '/' . $token));
 
@@ -116,50 +120,51 @@ class ProfileController extends Controller
 //Функция проверки ссылки из письма
     protected function verificationChangeEmail(int $id, string $token)
     {
-
         try {
             //Получаем юзера с такой связкой ID и confirm_token
             $user = User::where('id', $id)->where('verify_token', $token)->first();
         } catch (Exception $exception) {
-            return 'Ошибка подключения к БД.';
+            session()->put('infoMessage', 'Ошибка подключения к БД.');
+            return view('infoBoard');
         }
 
         //Если такого юзера нет
         if (is_null($user)) {
-            return 'Токен не подходит для данного пользователя!';
+            //Записываем результат в сессию
+            session()->put('infoMessage', 'Токен не подходит для данного пользователя!');
+            return view('infoBoard');
         }
-        //Записываем в переменную не подтвержденный адрес пользователя
-        $unconfirmed_email = $user->unconfirmed_email;
-        //Проверяем не успел ли кто-то заюзать это мыло пока письмо лежало в ящике
-        try {
-            $checkEmail = User::where('email', $unconfirmed_email)->first();
-        } catch (Exception $exception) {
-            return 'Ошибка подключения к БД!';
-        }
-        $validator = validator(['unc_email' => $unconfirmed_email], [
-                'unc_email' => 'unique:users,email',
-        ], ['unique' => 'Пользователь с таким Email-ом уже зарегистрирован.']);
-        //Если есть ошибки значит юзера с таким мыло нет и все ок
+        //Записываем в переменную неподтвержденный адрес пользователя
+        $unconfirmedEmail = $user->unconfirmed_email;
+        //Проверяем не успел ли кто-то заюзать этот Email пока письмо лежало в ящике
+        $validator = validator(['unc_email' => $unconfirmedEmail],
+                ['unc_email' => 'unique:users,email'],
+                ['unique' => 'Пользователь с таким Email-ом уже зарегистрирован.']);
+        //Если есть ошибка значить пользователь с таким Email уже есть
         if ($validator->fails()) {
+            //Обнуляем неподтвержденный Email
             $user->unconfirmed_email = null;
+            //И обнуляем токен подтверждения Email
             $user->verify_token      = null;
-
-            return $validator->errors()->first();
+            //Записываем результат в сессию
+            session()->put('infoMessage',$validator->errors()->first());
+            return view('infoBoard');
         }
         //Если тут значит юзера с таким Email нет и все ок
         //Назначаем пользователю новый Email
-        $user->email = $unconfirmed_email;
+        $user->email = $unconfirmedEmail;
         //Обнуление неподтвержденного адреса
         $user->unconfirmed_email = null;
         //Обнуление токена
-        $user->verify_token = null;//TODO
-        //Дата верификации
+        $user->verify_token = null;
+        //Устанавливаем дату верификации
         $user->email_verified_at = Carbon::now();
         //Сохранение в БД обновленных данных
         $user->save();
         //Логиним пользователя на сайт
         Auth::login($user, true);
-
-        return redirect()->route('home');
+        //Записываем результат в сессию
+        session()->put('infoMessage', 'Email удачно подтвержден!');
+        return view('infoBoard');
     }
 }

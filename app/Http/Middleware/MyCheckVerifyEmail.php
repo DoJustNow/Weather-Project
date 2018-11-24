@@ -18,7 +18,7 @@ class MyCheckVerifyEmail
     {
         //если пользователь не подтвердил Email
         if ( ! $request->user()->email_verified_at) {
-            //редирект на страницу напоминания о том что надо подтвердить мыло
+            //редирект на страницу напоминания о том что надо подтвердить Email
             return redirect()->route('verify');
         }
 

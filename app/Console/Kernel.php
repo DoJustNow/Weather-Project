@@ -13,7 +13,8 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+            Commands\VkSendWallPost::class,
+            Commands\VkSyncWallPosts::class,
     ];
 
     /**
@@ -26,6 +27,8 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')
         //          ->hourly();
+        //TODO добавить всякие плюшки
+        $schedule->command(Commands\VkSendWallPost::class)->everyMinute();
     }
 
     /**

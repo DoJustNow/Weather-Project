@@ -9,9 +9,11 @@ use App\Weather\Adapters\ClientYandexWeatherAdapter;
 use App\Weather\Clients\ClientOpenWeather;
 use App\Weather\Clients\ClientYandexWeather;
 use App\Weather\DTO\WeatherDTO;
+use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Response;
 
 class WeatherController extends Controller
 {
@@ -42,8 +44,10 @@ class WeatherController extends Controller
             }
             $weathers = $weathers->paginate(5);
 
-        } catch (QueryException $e) {
-            die('Ошибка подключения к БД<br>');
+        } catch (Exception $e) {
+            session()->put('infoMessage', 'Ошибка подключения к БД.');
+
+            return view('infoBoard');
         }
 
         return view('weather.show', compact(['weathers', 'cities', 'filter']));
@@ -87,13 +91,21 @@ class WeatherController extends Controller
         $lon          = $selectedCity->lon;
         $city         = $selectedCity->name;
         if ( ! empty($weather = $clientYandexWeatherAdapter->getWeather($lat, $lon))) {
-            $info ['successful'][] = $this->addWeatherInDB('Yandex', $city, $weather);
+            if ($result = $this->addWeatherInDB('Yandex', $city, $weather)) {
+                $info ['successful'][] = $result;
+            } else {
+                return view('infoBoard');
+            }
         } else {
             $info ['failure'][] = 'Не удалось подключиться к Yandex API';
         }
 
         if ( ! empty($weather = $clientOpenWeatherAdapter->getWeather($lat, $lon))) {
-            $info ['successful'][] = $this->addWeatherInDB('OpenWeather', $city, $weather);
+            if ($result = $this->addWeatherInDB('OpenWeather', $city, $weather)) {
+                $info ['successful'][] = $result;
+            } else {
+                return view('infoBoard');
+            }
         } else {
             $info ['failure'][] = 'Не удалось подключиться к OpenWeather API';
         }
@@ -105,8 +117,10 @@ class WeatherController extends Controller
     {
         try {
             $cities = City::all();
-        } catch (QueryException $e) {
-            die('Ошибка подключения к БД<br>');
+        } catch (Exception $e) {
+            session()->put('infoMessage', 'Ошибка подключения к БД.');
+
+            return view('infoBoard');
         }
 
         return $cities;
@@ -124,8 +138,10 @@ class WeatherController extends Controller
             $table->save();
 
             return "Данные из $api API удачно добавлены";
-        } catch (QueryException $e) {
-            die('Ошибка подключения к БД');
+        } catch (Exception $e) {
+            //записываем в сессию результат
+            session()->put('infoMessage', 'Ошибка подключения к БД.');
+            return false;
         }
     }
 }

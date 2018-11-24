@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Mail\VerifyChangeEmail;
 use App\User;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Mail;
 use Socialite;
 use Validator;
 
@@ -30,28 +33,60 @@ class SocialiteController extends Controller
 // dd($userSocialite);
         $userData = [
             //Сохранение id пользователя из "соц.сети"
-                "{$provider}_id"    => (string)$userSocialite->id,
+                "{$provider}_id" => (string)$userSocialite->id,
             //Сохранение имени пользователя из "соц.сети"
-                'name'              => $userSocialite->name,
+                'name'           => $userSocialite->name,
             //Сохранение Email-a пользователя из "соц.сети"
-                'unconfirmed_email' => $userSocialite->email ?? $userSocialite->accessTokenResponseBody['email'] ?? null,
+                'email'          => $userSocialite->email ?? $userSocialite->accessTokenResponseBody['email'] ?? null,
         ];
 
         //Получение пользователя с таким provider_id из базы
-        $user = User::where("{$provider}_id", $userData["{$provider}_id"])->first();
+        try {
+            $user = User::where("{$provider}_id", $userData["{$provider}_id"])->first();
+        } catch (Exception $exception) {
+            session()->put('infoMessage', 'Ошибка подключения к БД.');
 
+            return view('infoBoard');
+        }
         //Если такого пользователя нет
         if (is_null($user)) {
-            //создаем (регистрируем) нового пользователя
-            $user = new User($userData);
+            //Если c соцсети постуим Email
+            if ( ! is_null($userData['email'])) {
+                //Проверка Email-а из соцсети есть ли уже юзер с таким Email
+                $user = User::where('email', $userData['email'])->first();
+                //Если true то юзер с таким Email уже есть
+                if ($user) {
+                    $user = User::where('email', $userData['email'])->first();
+                    switch ($provider):
+                        case 'github':
+                            $user->github_id = $userData['github_id'];
+                            break;
+                        case 'vkontakte':
+                            $user->vkontakte_id = $userData['vkontakte_id'];
+                            break;
+                        case 'mailru':
+                            $user->mailru_id = $userData['mailru_id'];
+                            break;
+                        case 'google':
+                            $user->google_id = $userData['google_id'];
+                            break;
+                    endswitch;
+                } else {
+                    //создаем (регистрируем) нового пользователя
+                    $user = new User($userData);
+                    //Назначаем дату верификации Email
+                    $user->email_verified_at = Carbon::now();
+                }
+            } else {
+                $user = new User($userData);
+            }
             $user->save();
         }
-
         //Логиним пользователя на сайте и запоминаем
         Auth::login($user, true);
 
-        //Редиректим на автоотправку письма по Email
-        return redirect()->route('verify_resend');
+        /*Редиректим на profile*/
 
+        return redirect()->route('profileSettings');
     }
 }

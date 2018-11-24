@@ -10,7 +10,7 @@ use GuzzleHttp\Exception\GuzzleException;
 class ClientYandexWeather implements WeatherClientInterface
 {
     private $client;
-    private $key = '0448d8d5-becb-46fe-bec5-e89716ebf3f7';
+    private $key = 'b29a844f-c98f-4683-88f4-a9dc1cca5299';
 
 
     public function __construct()
