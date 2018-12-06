@@ -42,30 +42,35 @@ class VkSyncWallPosts extends Command
      */
     public function handle()
     {
-        $vk             = new VKApiClient();
-        $access_token   = env('VK_ACCESS_TOKEN');
+        $vk = new VKApiClient();
+        $access_token = env('VK_ACCESS_TOKEN');
         $numberGetPosts = 100;
-        $wallPosts      = Weather::select('posted')
-                                 ->where('posted', '!=', 0)
-                                 ->orderBy('created_at')
-                                 ->chunk($numberGetPosts/*TODO*/,
-                                     function (Collection $posts) {
-                                         foreach ($posts as $post) {
-                                             $this->postsIdBuffer[]
-                                                 = $post->posted;
-                                         }
-                                     });
+        $wallPosts = Weather::select('posted')
+            ->where('posted', '!=', 0)
+            ->orderBy('created_at')
+            ->chunk($numberGetPosts/*TODO*/,
+                function (Collection $posts) {
+                    foreach ($posts as $post) {
+                        $this->postsIdBuffer[]
+                            = $post->posted;
+                    }
+                });
         //Получили ID всех уникальных постов за все время
         $postsId = array_unique($this->postsIdBuffer);
 
         /*TODO Цикл по постам вк*/
+        $offset = 0;
+        do{
         $response = $vk->wall()
-                       ->get($access_token,
-                           [
-                               'filter' => 'owner',
-                               'count'  => 100,
-                               'offset' => 0,
-                           ]);
+            ->get($access_token,
+                [
+                    'filter' => 'owner',
+                    'count' => $numberGetPosts,
+                    'offset' => $offset,
+                ]);
+        $postsCount = count($response['items']);
+        $this->info('Количество постов полученных со стены: '.$postsCount);
+
         //Цикл по полученным постам из VK
         foreach ($response['items'] as $item) {
             //Если на стене есть пост c ID из базы данных удаляем его из буфера т.к он активен
@@ -75,12 +80,15 @@ class VkSyncWallPosts extends Command
             }
         }
         Weather::whereIn('posted', $postsId)
-               ->chunk($numberGetPosts, function (Collection $weathers) {
-                   foreach ($weathers as $weather) {
-                       $weather->posted = 0;
-                       $weather->save();
-                   }
-               });
-
+            ->chunk($numberGetPosts, function (Collection $weathers) {
+                foreach ($weathers as $weather) {
+                    $this->info('Пост: '.$weather->posted.' небыл найден.');
+                    $weather->posted = 0;
+                    $weather->save();
+                }
+            });
+        //Увеличить сдвиг
+        $offset +=  $numberGetPosts;
+    }while($postsCount >0);
     }
 }
