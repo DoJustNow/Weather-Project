@@ -56,7 +56,8 @@ class VkSendWallPost extends Command
                                ->limit($numberForecastSent)
                                ->get();
             if ($weathers->isEmpty()) {
-                die("Новых записей для публикации нет.\n");
+                echo "Новых записей для публикации нет.\n<br>";
+                return;
             }
             $message = '';
             //Перебор записей погоды из БД; reverse чтобы они шли снизу вверх по дате
