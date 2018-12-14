@@ -20,6 +20,7 @@ class CreateWeathersTable extends Migration
             $table->string('condition');
             $table->tinyInteger('temperature');
             $table->float('wind_speed');
+            $table->integer('posted')->default(0);
             $table->timestamps();
         });
     }
