@@ -3,8 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Weather;
+use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Collection;
+use Log;
 use VK\Client\VKApiClient;
 
 class VkSyncWallPosts extends Command
@@ -64,13 +65,20 @@ class VkSyncWallPosts extends Command
         $postsIdBuffer = array_unique($postsIdBuffer);
         //Цикл по постам на стене VK
         do {
-            $response   = $vk->wall()
-                             ->get($access_token,
-                                 [
-                                     'filter' => 'owner',
-                                     'count'  => $numberGetPosts,
-                                     'offset' => $offset,
-                                 ]);
+            try {
+                $response = $vk->wall()
+                               ->get($access_token,
+                                   [
+                                       'filter' => 'owner',
+                                       'count'  => $numberGetPosts,
+                                       'offset' => $offset,
+                                   ]);
+            } catch (Exception $exception) {
+                Log::error($exception->getMessage());
+                $this->error($exception->getMessage());
+
+                return;
+            }
             $postsCount = count($response['items']);
             $this->info("Количество постов полученных со стены: $postsCount");
 
