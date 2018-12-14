@@ -48,6 +48,7 @@ class VkSyncWallPosts extends Command
     {
         $vk           = new VKApiClient();
         $access_token = env('VK_ACCESS_TOKEN');
+        $ownerId      = env('VK_USER_ID');
         //Число получаемых записей со страницы
         $numberGetPosts = 100;
         $postsIdBuffer  = [];
@@ -69,9 +70,10 @@ class VkSyncWallPosts extends Command
                 $response = $vk->wall()
                                ->get($access_token,
                                    [
-                                       'filter' => 'owner',
-                                       'count'  => $numberGetPosts,
-                                       'offset' => $offset,
+                                       'owner_id' => $ownerId,
+                                       'filter'   => 'owner',
+                                       'count'    => $numberGetPosts,
+                                       'offset'   => $offset,
                                    ]);
             } catch (Exception $exception) {
                 Log::error($exception->getMessage());
