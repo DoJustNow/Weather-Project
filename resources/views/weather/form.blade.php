@@ -18,12 +18,13 @@
         </div>
     </form>
 
+
     {{-- Вывод блока(-ов) сообщений --}}
-    @if(isset($info)&&!empty($info))
-        @foreach($info as $typeMessage=>$messages)
+    @if(session('addWeatherResult'))
+        @foreach(session()->pull('addWeatherResult') as $typeMessage=>$messages)
             <div id="info-alert" class="wow flipInX alert
         {{$typeMessage=='successful'?'alert-success':'alert-danger'}}
-                    show fade col-8 mt-1 ml-auto mr-auto">
+                show fade col-8 mt-1 ml-auto mr-auto">
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>

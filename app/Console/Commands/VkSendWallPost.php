@@ -11,8 +11,6 @@ use VK\Client\VKApiClient;
 class VkSendWallPost extends Command
 {
 
-    private $vkApiMethods;
-
     /**
      * The name and signature of the console command.
      *
@@ -44,22 +42,23 @@ class VkSendWallPost extends Command
      */
     public function handle()
     {
-        //VK Sdk api
-        $vk           = new VKApiClient();
-        $access_token = env('VK_ACCESS_TOKEN');
         //Число отправляемых записей о прогнозе погоды в одном посте
         $numberForecastSent = 4;
+        $vk                 = new VKApiClient();
+        $access_token       = env('VK_ACCESS_TOKEN');
+        $message            = '';
         do {
+            //задержка т.к максимум допустимо 3 обращения в секунду к API
             usleep(340);
             $weathers = Weather::where('posted', 0)
                                ->orderBy('created_at')
                                ->limit($numberForecastSent)
                                ->get();
             if ($weathers->isEmpty()) {
-                echo "Новых записей для публикации нет.\n<br>";
+                $this->info("Новых записей для публикации нет.");
+
                 return;
             }
-            $message = '';
             //Перебор записей погоды из БД; reverse чтобы они шли снизу вверх по дате
             foreach ($weathers->reverse() as $weather) {
                 //Формирование сообщения поста
@@ -77,10 +76,12 @@ class VkSendWallPost extends Command
             } catch (Exception $exception) {
                 Log::error($exception->getMessage());
                 $this->error($exception->getMessage());
+
                 return;
             }
 
             //Назначаем id опубликованного поста записям
+
             foreach ($weathers as $weather) {
                 $weather->posted = $result['post_id'];
                 $weather->save();

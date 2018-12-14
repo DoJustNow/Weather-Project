@@ -41,7 +41,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\User whereVkontakteId($value)
  * @property string|null $unconfirmed_email
  * @method static \Illuminate\Database\Eloquent\Builder|\App\User whereUnconfirmedEmail($value)
- */                                //Наследует контракт для проверки Email-a
+ */
 class User extends Authenticatable
 {
     use Notifiable;

@@ -1,9 +1,6 @@
 <?php
 namespace App\Weather\Clients;
 
-
-use App\Weather\Translators\TranslatorOpenWeather;
-use App\Weather\WeatherClientInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -29,10 +26,10 @@ class ClientOpenWeather implements WeatherClientInterface
                    'appid' => $this->key,
                ]);
         try {
-            $response      = $this->client->request('GET', $uri);
-            $response_data = json_decode((string)$response->getBody(), true);
+            $response     = $this->client->request('GET', $uri);
+            $responseData = json_decode((string)$response->getBody(), true);
 
-            return $response_data;
+            return $responseData;
         } catch (GuzzleException $e) {
             return null;
         }

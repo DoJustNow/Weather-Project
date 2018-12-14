@@ -10,13 +10,12 @@ use VK\Client\VKApiClient;
 class VkSyncWallPosts extends Command
 {
 
-    private $postsIdBuffer;
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'wall:post:sync';
+    protected $signature = 'wall:sync';
 
     /**
      * The console command description.
@@ -39,56 +38,64 @@ class VkSyncWallPosts extends Command
      * Execute the console command.
      *
      * @return mixed
+     * @throws \VK\Exceptions\Api\VKApiBlockedException
+     * @throws \VK\Exceptions\Api\VKApiUserDeletedException
+     * @throws \VK\Exceptions\VKApiException
+     * @throws \VK\Exceptions\VKClientException
      */
     public function handle()
     {
-        $vk = new VKApiClient();
+        $vk           = new VKApiClient();
         $access_token = env('VK_ACCESS_TOKEN');
+        //Число получаемых записей со страницы
         $numberGetPosts = 100;
-        $wallPosts = Weather::select('posted')
-            ->where('posted', '!=', 0)
-            ->orderBy('created_at')
-            ->chunk($numberGetPosts/*TODO*/,
-                function (Collection $posts) {
-                    foreach ($posts as $post) {
-                        $this->postsIdBuffer[]
-                            = $post->posted;
-                    }
-                });
-        //Получили ID всех уникальных постов за все время
-        $postsId = array_unique($this->postsIdBuffer);
+        $postsIdBuffer  = [];
+        $offset         = 0;
+        //Зпись в буфер всех ID постов VK из БД
+        Weather::select('posted')
+               ->where('posted', '!=', 0)
+               ->orderBy('created_at')
+               ->chunk($numberGetPosts, function ($posts) {
+                   foreach ($posts as $post) {
+                       $postsIdBuffer[] = $post->posted;
+                   }
+               });
+        //Удаление дубликатов из буфера
+        $postsIdBuffer = array_unique($postsIdBuffer);
+        //Цикл по постам на стене VK
+        do {
+            $response   = $vk->wall()
+                             ->get($access_token,
+                                 [
+                                     'filter' => 'owner',
+                                     'count'  => $numberGetPosts,
+                                     'offset' => $offset,
+                                 ]);
+            $postsCount = count($response['items']);
+            $this->info("Количество постов полученных со стены: $postsCount");
 
-        /*TODO Цикл по постам вк*/
-        $offset = 0;
-        do{
-        $response = $vk->wall()
-            ->get($access_token,
-                [
-                    'filter' => 'owner',
-                    'count' => $numberGetPosts,
-                    'offset' => $offset,
-                ]);
-        $postsCount = count($response['items']);
-        $this->info('Количество постов полученных со стены: '.$postsCount);
-
-        //Цикл по полученным постам из VK
-        foreach ($response['items'] as $item) {
-            //Если на стене есть пост c ID из базы данных удаляем его из буфера т.к он активен
-            //По итогу в массиве остануться только ID постов которые небыли найдены на стене
-            if (($key = array_search($item['id'], $postsId)) !== false) {
-                unset($postsId[$key]);
-            }
-        }
-        Weather::whereIn('posted', $postsId)
-            ->chunk($numberGetPosts, function (Collection $weathers) {
-                foreach ($weathers as $weather) {
-                    $this->info('Пост: '.$weather->posted.' небыл найден.');
-                    $weather->posted = 0;
-                    $weather->save();
+            //Цикл по полученным постам из VK
+            foreach ($response['items'] as $item) {
+                //Если на стене есть пост c ID из базы данных удаляем его из буфера т.к он активен
+                //По итогу в массиве остануться только ID постов которые небыли найдены на стене
+                if (($key = array_search($item['id'], $postsIdBuffer))
+                    !== false
+                ) {
+                    unset($postsIdBuffer[$key]);
                 }
-            });
-        //Увеличить сдвиг
-        $offset +=  $numberGetPosts;
-    }while($postsCount >0);
+            }
+            //Цикл по записям в БД и выборка всех постов с posted который есть в буфере
+            //то есть те посты которые небыли найдены на стене
+            Weather::whereIn('posted', $postsIdBuffer)
+                   ->chunk($numberGetPosts, function ($weathers) {
+                       foreach ($weathers as $weather) {
+                           $this->info("Пост: $weather->posted небыл найден.");
+                           $weather->posted = 0;
+                           $weather->save();
+                       }
+                   });
+            //Увеличить сдвиг
+            $offset += $numberGetPosts;
+        } while ($postsCount > 0);
     }
 }

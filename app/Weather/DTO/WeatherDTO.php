@@ -1,16 +1,18 @@
 <?php
-
 namespace App\Weather\DTO;
 
-
-class WeatherDTO
+class WeatherDTO implements WeatherDtoInterface
 {
+
     private $condition;
     private $temperature;
     private $windSpeed;
 
-    public function __construct(string $condition, int $temperature, float $windSpeed)
-    {
+    public function __construct(
+        string $condition,
+        int $temperature,
+        float $windSpeed
+    ) {
         $this->condition   = $condition;
         $this->temperature = $temperature;
         $this->windSpeed   = $windSpeed;

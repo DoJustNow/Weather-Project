@@ -6,140 +6,98 @@ use App\City;
 use App\Weather;
 use App\Weather\Adapters\ClientOpenWeatherAdapter;
 use App\Weather\Adapters\ClientYandexWeatherAdapter;
-use App\Weather\Clients\ClientOpenWeather;
-use App\Weather\Clients\ClientYandexWeather;
 use App\Weather\DTO\WeatherDTO;
-use Exception;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\QueryException;
+use Cache;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Response;
 
 class WeatherController extends Controller
 {
 
-    private $request;
-
-    private $clientYandexWeather;
-
-    private $clientOpenWeather;
-
-    public function __construct(
-        Request $request,
-        ClientYandexWeather $clientYandexWeather,
-        ClientOpenWeather $clientOpenWeather
-    ) {
-        $this->request             = $request;
-        $this->clientYandexWeather = $clientYandexWeather;
-        $this->clientOpenWeather   = $clientOpenWeather;
-
-    }
-
     public function showWeather($city = null)
     {
-        $filter = false;
-        try {
-            $cities   = $this->getCitiesFromDB();
-            $weathers = Weather::orderBy('id', 'desc');
-            if ($city) {
-                $filter   = $city;
-                $weathers = $weathers->where('city', $city);
-            }
-            $weathers = $weathers->paginate(5);
-
-        } catch (Exception $e) {
-            session()->put('infoMessage', 'Ошибка подключения к БД.');
-
-            return view('infoBoard');
+        $paginateRows = 5;
+        $filter       = false;
+        $cities       = $this->getCitiesFromDB();
+        $weathers     = Weather::orderBy('id', 'desc');
+        if ($city) {
+            $filter   = $city;
+            $weathers = $weathers->where('city', $city);
         }
+        $weathers = $weathers->paginate($paginateRows);
 
         return view('weather.show', compact(['weathers', 'cities', 'filter']));
     }
 
-    /*Request уже есть т.к Dependency Injection*/
-    public function targetCity()
+    public function targetCity(Request $request)
     {
-        $this->validate($this->request,
-            ['city' => 'required|exists:cities,name'],
-            [
-                'required' => 'Необходимо выбрать город.',
-                'exists'   => 'Такого города у нас нет!',
-            ]);
+        $validateRules    = ['city' => 'required|exists:cities,name',];
+        $validateMessages = [
+            'required' => 'Необходимо выбрать город.',
+            'exists'   => 'Такого города у нас нет!',
+        ];
+        $this->validate($request, $validateRules, $validateMessages);
 
-        return redirect()->route('showWeather',
-            ['city' => $this->request->input('city', 'Moscow')]);
+        return redirect()->route('showWeather', ['city' => $request->city]);
     }
 
-    public function addWeatherForm($info = false)
+    public function addWeatherForm()
     {
         $cities = $this->getCitiesFromDB();
 
-        return view('weather.form', compact(['cities', 'info']));
+        return view('weather.form', compact(['cities']));
     }
 
-    /*Request уже есть т.к Dependency Injection*/
     public function addWeather(
+        Request $request,
         ClientOpenWeatherAdapter $clientOpenWeatherAdapter,
         ClientYandexWeatherAdapter $clientYandexAdapter
     ) {
         //TODO Исправить
-        $apiServices = ['Yandex', 'OpenWeather'];
-        $this->validate($this->request,
+        //$apiServices = ['Yandex', 'OpenWeather'];
+        //Получаем провайдеров
+        $apiServices = config('weather_services');
+        $this->validate($request,
             ['city_id' => 'required|exists:cities,id'],
             [
                 'required' => 'Необходимо выбрать город.',
                 'exists'   => 'Что-то пошло не так! :attribute ?',
             ]
         );
-        $cities       = $this->getCitiesFromDB();
-        $selectedCity = $cities->find($this->request->input('city_id', 1));
-        $lat          = $selectedCity->lat;
-        $lon          = $selectedCity->lon;
-        $city         = $selectedCity->name;
-
-        foreach ($apiServices as $apiService) {
-            $key = sha1($lat.$lon.date('d').$apiService);
+        $cities           = $this->getCitiesFromDB();
+        $selectedCity     = $cities->find($request->city_id);
+        $lat              = $selectedCity->lat;
+        $lon              = $selectedCity->lon;
+        $city             = $selectedCity->name;
+        $addWeatherResult = [];
+        foreach ($apiServices as $apiName => $apiClientAdapterClass) {
+            $key = sha1($lat . $lon . date('d') . $apiName);
             //Кеширование на 60 минут
             $weather = Cache::remember($key, 60,
-                function () use (
-                    $lat,
-                    $lon,
-                    $apiService,
-                    $clientOpenWeatherAdapter,
-                    $clientYandexAdapter
-                ) {
-                    return ${"client{$apiService}Adapter"}->getWeather($lat,
+                function () use ($lat, $lon, $apiClientAdapterClass) {
+                    return app()->make($apiClientAdapterClass)->getWeather($lat,
                         $lon);
                 });
-
-            if ( ! empty($weather)) {
-                if ($result = $this->addWeatherInDB($apiService, $city,
-                    $weather)
-                ) {
-                    $info ['successful'][] = $result;
-                } else {
-                    return view('infoBoard');
-                }
+            if ($weather !== null) {
+                $this->addWeatherInDB($apiName, $city, $weather);
+                $addWeatherResult['successful'][]
+                    = "Данные из $apiName API удачно добавлены";
             } else {
-                $info ['failure'][]
-                    = "Не удалось подключиться к $apiService API";
+                $addWeatherResult['failure'][]
+                    = "Не удалось подключиться к $apiName API";
             }
 
         }
 
-        return view('weather.form', compact(['cities', 'info']));
+        session()->put('addWeatherResult', $addWeatherResult);
+
+        return view('weather.form', compact(['cities']));
     }
 
-    private function getCitiesFromDB(): Collection
+    private function getCitiesFromDB()
     {
-        try {
-            $cities = City::all();
-        } catch (Exception $e) {
-            session()->put('infoMessage', 'Ошибка подключения к БД.');
-
-            return view('infoBoard');
-        }
+        $cities = Cache::remember('sities', 600, function () {
+            return City::all();
+        });
 
         return $cities;
     }
@@ -148,22 +106,13 @@ class WeatherController extends Controller
         string $api,
         string $city,
         WeatherDTO $weather
-    ): string {
+    ) {
         $table              = new Weather();
         $table->api         = $api;
         $table->city        = $city;
         $table->condition   = $weather->getCondition();
         $table->temperature = $weather->getTemperature();
         $table->wind_speed  = $weather->getWindSpeed();
-        try {
-            $table->save();
-
-            return "Данные из $api API удачно добавлены";
-        } catch (Exception $e) {
-            //записываем в сессию результат
-            session()->put('infoMessage', 'Ошибка подключения к БД.');
-
-            return false;
-        }
+        $table->save();
     }
 }

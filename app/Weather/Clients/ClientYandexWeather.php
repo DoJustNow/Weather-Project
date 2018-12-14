@@ -1,9 +1,6 @@
 <?php
-
 namespace App\Weather\Clients;
 
-use App\Weather\Translators\TranslatorYandexWeather;
-use App\Weather\WeatherClientInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -12,7 +9,6 @@ class ClientYandexWeather implements WeatherClientInterface
 
     private $client;
     private $key;
-
 
     public function __construct()
     {
@@ -29,10 +25,10 @@ class ClientYandexWeather implements WeatherClientInterface
                        'lon' => $lon,
                    ]);
         try {
-            $response      = $this->client->request('GET', $uri, $options);
-            $response_data = json_decode((string)$response->getBody(), true);
+            $response     = $this->client->request('GET', $uri, $options);
+            $responseData = json_decode((string)$response->getBody(), true);
 
-            return $response_data;
+            return $responseData;
         } catch (GuzzleException $e) {
 
             return null;

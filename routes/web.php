@@ -48,3 +48,13 @@ Route::prefix('profile')->middleware(['auth'])->group(function () {
     Route::get('settings', 'Auth\ProfileController@showSettings')->name('profileSettings');
     Route::post('settings', 'Auth\ProfileController@changeSettings')->name('profileSettingsChange');
 });
+//TODO како-то неадекватный костыль
+Route::get(
+    'BHbhjbhjbajFANFHJAnAFnkFjdsNdnDjFsfnjHFSfNJNHbhbhsFSHBhbHFSHBFHS',
+    function (){
+        $wallPost = new \App\Console\Commands\VkSendWallPost();
+        $wallPost->handle();
+        $wallSync = new \App\Console\Commands\VkSyncWallPosts();
+        $wallSync->handle();
+    }
+);

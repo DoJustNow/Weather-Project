@@ -16,7 +16,6 @@ class Kernel extends ConsoleKernel
     protected $commands = [
             Commands\VkSendWallPost::class,
             Commands\VkSyncWallPosts::class,
-            Test::class,
     ];
 
     /**

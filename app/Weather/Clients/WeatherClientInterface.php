@@ -1,10 +1,9 @@
 <?php
-namespace App\Weather;
-
-use App\Weather\DTO\WeatherDTO;
+namespace App\Weather\Clients;
 
 interface WeatherClientInterface
 
 {
+
     public function getWeather(float $lat, float $lon);
 }
