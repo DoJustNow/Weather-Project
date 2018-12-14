@@ -15,6 +15,7 @@ use Validator;
 
 class SocialiteController extends Controller
 {
+
     public function redirectToProvider($provider)
     {
         //Если провайдер существует редиректим к нему, иначе на страницу логина
@@ -27,36 +28,30 @@ class SocialiteController extends Controller
 
     public function handleProviderCallback($provider)
     {
-
         //Получение данных о юзере
         $userSocialite = Socialite::driver($provider)->user();
-// dd($userSocialite);
-        $userData = [
+        $userData      = [
             //Сохранение id пользователя из "соц.сети"
-                "{$provider}_id" => (string)$userSocialite->id,
+            "{$provider}_id" => (string)$userSocialite->id,
             //Сохранение имени пользователя из "соц.сети"
-                'name'           => $userSocialite->name,
+            'name'           => $userSocialite->name,
             //Сохранение Email-a пользователя из "соц.сети"
-                'email'          => $userSocialite->email ?? $userSocialite->accessTokenResponseBody['email'] ?? null,
+            'email'          => $userSocialite->email ??
+                                $userSocialite->accessTokenResponseBody['email']
+                                ?? null,
         ];
 
         //Получение пользователя с таким provider_id из базы
-        try {
-            $user = User::where("{$provider}_id", $userData["{$provider}_id"])->first();
-        } catch (Exception $exception) {
-            session()->put('infoMessage', 'Ошибка подключения к БД.');
-
-            return view('infoBoard');
-        }
+        $user = User::where("{$provider}_id", $userData["{$provider}_id"])
+                    ->first();
         //Если такого пользователя нет
-        if (is_null($user)) {
-            //Если c соцсети постуим Email
-            if ( ! is_null($userData['email'])) {
+        if ($user === null) {
+            //Если c соцсети поступил Email
+            if ($userData['email'] !== null) {
                 //Проверка Email-а из соцсети есть ли уже юзер с таким Email
                 $user = User::where('email', $userData['email'])->first();
                 //Если true то юзер с таким Email уже есть
                 if ($user) {
-                    $user = User::where('email', $userData['email'])->first();
                     switch ($provider):
                         case 'github':
                             $user->github_id = $userData['github_id'];
