@@ -11,6 +11,7 @@ use VK\Client\VKApiClient;
 class VkSyncWallPosts extends Command
 {
 
+    private $postsIdBuffer;
     /**
      * The name and signature of the console command.
      *
@@ -48,10 +49,8 @@ class VkSyncWallPosts extends Command
     {
         $vk           = new VKApiClient();
         $access_token = env('VK_ACCESS_TOKEN');
-        $ownerId      = env('VK_USER_ID');
         //Число получаемых записей со страницы
         $numberGetPosts = 100;
-        $postsIdBuffer  = [];
         $offset         = 0;
         //Зпись в буфер всех ID постов VK из БД
         Weather::select('posted')
@@ -59,21 +58,20 @@ class VkSyncWallPosts extends Command
                ->orderBy('created_at')
                ->chunk($numberGetPosts, function ($posts) {
                    foreach ($posts as $post) {
-                       $postsIdBuffer[] = $post->posted;
+                       $this->postsIdBuffer[] = $post->posted;
                    }
                });
         //Удаление дубликатов из буфера
-        $postsIdBuffer = array_unique($postsIdBuffer);
+        $this->postsIdBuffer = array_unique($this->postsIdBuffer);
         //Цикл по постам на стене VK
         do {
             try {
                 $response = $vk->wall()
                                ->get($access_token,
                                    [
-                                       'owner_id' => $ownerId,
-                                       'filter'   => 'owner',
-                                       'count'    => $numberGetPosts,
-                                       'offset'   => $offset,
+                                       'filter' => 'owner',
+                                       'count'  => $numberGetPosts,
+                                       'offset' => $offset,
                                    ]);
             } catch (Exception $exception) {
                 Log::error($exception->getMessage());
@@ -88,15 +86,15 @@ class VkSyncWallPosts extends Command
             foreach ($response['items'] as $item) {
                 //Если на стене есть пост c ID из базы данных удаляем его из буфера т.к он активен
                 //По итогу в массиве остануться только ID постов которые небыли найдены на стене
-                if (($key = array_search($item['id'], $postsIdBuffer))
+                if (($key = array_search($item['id'], $this->postsIdBuffer))
                     !== false
                 ) {
-                    unset($postsIdBuffer[$key]);
+                    unset($this->postsIdBuffer[$key]);
                 }
             }
             //Цикл по записям в БД и выборка всех постов с posted который есть в буфере
             //то есть те посты которые небыли найдены на стене
-            Weather::whereIn('posted', $postsIdBuffer)
+            Weather::whereIn('posted', $this->postsIdBuffer)
                    ->chunk($numberGetPosts, function ($weathers) {
                        foreach ($weathers as $weather) {
                            $this->info("Пост: $weather->posted небыл найден.");
