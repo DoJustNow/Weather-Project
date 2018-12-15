@@ -46,8 +46,9 @@ class VkSendWallPost extends Command
         $numberForecastSent = 4;
         $vk                 = new VKApiClient();
         $access_token       = env('VK_ACCESS_TOKEN');
-        $message            = '';
         do {
+            //Очистка строки на каждой итерации цикла
+            $message = '';
             //задержка т.к максимум допустимо 3 обращения в секунду к API
             usleep(340);
             $weathers = Weather::where('posted', 0)
@@ -79,9 +80,7 @@ class VkSendWallPost extends Command
 
                 return;
             }
-
             //Назначаем id опубликованного поста записям
-
             foreach ($weathers as $weather) {
                 $weather->posted = $result['post_id'];
                 $weather->save();
