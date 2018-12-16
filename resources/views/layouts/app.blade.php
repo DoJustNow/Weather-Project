@@ -46,17 +46,19 @@
 
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <!-- Left Side Of Navbar -->
-                @auth
                 <nav class="navbar-nav pt-1">
+                @auth
                     <a class="nav-item nav-link {{Route::is(['showWeather'])?'active':null}}"
                        href="{{route('showWeather')}}">Листинг</a>
                     <a class="nav-item nav-link {{Route::is(['form*'])?'active':null}}" href="{{route('formWeather')}}">Форма
                         добавления</a>
-                </nav>
                 @endauth
+                    <a class="nav-item nav-link {{Route::is(['*eedback*'])?'active':null}}" href="{{route('vkFeedback')}}">Отзывы</a>
+                </nav>
 
                 <!-- Right Side Of Navbar -->
                 <ul class="navbar-nav ml-auto">
+
                     <!-- Authentication Links -->
                     @guest
                         <li class="nav-item">

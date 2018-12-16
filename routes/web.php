@@ -49,3 +49,4 @@ Route::prefix('profile')->middleware(['auth'])->group(function () {
     Route::post('settings', 'Auth\ProfileController@changeSettings')->name('profileSettingsChange');
 });
 
+Route::get('/feedback/vk','VkFeedbackController@index')->name('vkFeedback');
