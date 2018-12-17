@@ -52,7 +52,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email','unconfirmed_email', 'password','vkontakte_id','github_id','google_id','mailru_id'
+        'name', 'email','unconfirmed_email', 'password','vkontakte','github','google','mailru'
     ];
 
     /**
