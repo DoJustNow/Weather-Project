@@ -2,16 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Mail\VerifyChangeEmail;
 use App\User;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Mail;
 use Socialite;
-use Validator;
 
 class SocialiteController extends Controller
 {
@@ -32,17 +28,17 @@ class SocialiteController extends Controller
         $userSocialite = Socialite::driver($provider)->user();
         $userData      = [
             //Сохранение id пользователя из "соц.сети"
-            "{$provider}_id" => (string)$userSocialite->id,
+            $provider => (string)$userSocialite->id,
             //Сохранение имени пользователя из "соц.сети"
-            'name'           => $userSocialite->name,
+            'name'            => $userSocialite->name,
             //Сохранение Email-a пользователя из "соц.сети"
-            'email'          => $userSocialite->email ??
-                                $userSocialite->accessTokenResponseBody['email']
-                                ?? null,
+            'email'           => $userSocialite->email ??
+                                 $userSocialite->accessTokenResponseBody['email']
+                                 ?? null,
         ];
 
         //Получение пользователя с таким provider_id из базы
-        $user = User::where("{$provider}_id", $userData["{$provider}_id"])
+        $user = User::where($provider, $userData[$provider])
                     ->first();
         //Если такого пользователя нет
         if ($user === null) {
@@ -52,20 +48,8 @@ class SocialiteController extends Controller
                 $user = User::where('email', $userData['email'])->first();
                 //Если true то юзер с таким Email уже есть
                 if ($user) {
-                    switch ($provider):
-                        case 'github':
-                            $user->github_id = $userData['github_id'];
-                            break;
-                        case 'vkontakte':
-                            $user->vkontakte_id = $userData['vkontakte_id'];
-                            break;
-                        case 'mailru':
-                            $user->mailru_id = $userData['mailru_id'];
-                            break;
-                        case 'google':
-                            $user->google_id = $userData['google_id'];
-                            break;
-                    endswitch;
+                    //Назначаем существующему юзеру id соцсети
+                    $user->{$provider} = $userData[$provider];
                 } else {
                     //создаем (регистрируем) нового пользователя
                     $user = new User($userData);
