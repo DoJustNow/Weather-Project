@@ -27,6 +27,7 @@
                 </div>
             </div>
         </form>
+        Публикуется также на <a href="https://vk.com/id516997158" target="_blank" class="alert-link">https://vk.com/id516997158</a>
         <div class="table-responsive table-sm">
             <table class="table table-striped table-bordered table-dark table-hover text-center">
                 <thead>

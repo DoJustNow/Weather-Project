@@ -17,7 +17,9 @@
             </div>
         </div>
     </form>
-
+    <div class="text-center">
+        Результат автоматически публикуется на <a href="https://vk.com/id516997158" target="_blank" class="alert-link">https://vk.com/id516997158</a>
+    </div>
 
     {{-- Вывод блока(-ов) сообщений --}}
     @if(session('addWeatherResult'))
