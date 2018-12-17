@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title')
-    Листинг
+    Погода
 @endsection
 @section('content')
     <div class="container">

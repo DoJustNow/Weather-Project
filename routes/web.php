@@ -15,13 +15,15 @@ Route::get('/', function () {
     return redirect()->route('home');
 });
 
-Route::prefix('weather')->middleware(['auth', 'myVerifiedEmail'])->group(
-        function () {
-            Route::get('form', 'WeatherController@addWeatherForm')->name('formWeather');
-            Route::post('form', 'WeatherController@addWeather')->name('formAddWeather');
+Route::prefix('weather')->group(
+    function () {
+            Route::prefix('form')->middleware(['auth', 'myVerifiedEmail'])->group(function (){
+                Route::get('/', 'WeatherController@addWeatherForm')->name('formWeather');
+                Route::post('/', 'WeatherController@addWeather')->middleware(['isAdmin'])->name('formAddWeather');
+            });
             Route::get('show/{city?}', 'WeatherController@showWeather')->name('showWeather');
             Route::post('show', 'WeatherController@targetCity')->name('cityWeather');
-        });
+    });
 
 Route::get('/home', 'HomeController@index')->name('home');
 

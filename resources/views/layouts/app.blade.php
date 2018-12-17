@@ -47,12 +47,12 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <!-- Left Side Of Navbar -->
                 <nav class="navbar-nav pt-1">
-                @auth
                     <a class="nav-item nav-link {{Route::is(['showWeather'])?'active':null}}"
-                       href="{{route('showWeather')}}">Листинг</a>
+                       href="{{route('showWeather')}}">Погода</a>
+                    @auth
                     <a class="nav-item nav-link {{Route::is(['form*'])?'active':null}}" href="{{route('formWeather')}}">Форма
                         добавления</a>
-                @endauth
+                    @endauth
                     <a class="nav-item nav-link {{Route::is(['*eedback*'])?'active':null}}" href="{{route('vkFeedback')}}">Отзывы</a>
                 </nav>
 
